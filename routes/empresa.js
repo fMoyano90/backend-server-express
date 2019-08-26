@@ -6,11 +6,10 @@ var mdAutenticacion = require('../middlewares/autenticacion');
 
 var app = express();
 
-var Usuario = require('../models/usuario');
-
+var Empresa = require('../models/empresa');
 
 // ======================================
-// Obtener todos los usuarios
+// Obtener todas las empresas 
 // ======================================
 
 app.get('/', (req, res, next) => {
@@ -18,11 +17,12 @@ app.get('/', (req, res, next) => {
     var desde = req.query.desde || 0;
     desde = Number(desde);
 
-    Usuario.find({}, 'nombre email img role')
+    Empresa.find({})
         .skip(desde)
         .limit(5)
+        .populate('usuario', 'nombre email')
         .exec(
-        (err, usuarios)=>{
+        (err, empresas)=>{
         if(err){
             return res.status(500).json({
                 ok: false,
@@ -31,48 +31,45 @@ app.get('/', (req, res, next) => {
             });
         }
 
-        Usuario.count({}, (err, conteo) => {
-
+        Empresa.count({},(err, conteo) => {
+            
             res.status(200).json({
                 ok: true,
-                usuarios: usuarios,
+                empresas: empresas,
                 total: conteo
             });
 
-        })
+        });
     })
 });
 
 
 // ======================================
-// Crear un nuevo usuario
+// Crear una nueva empresa
 // ======================================
 
 app.post('/', mdAutenticacion.verificaToken, (req, res) => {
 
     var body = req.body;
 
-    var usuario = new Usuario({
+    var empresa = new Empresa({
         nombre: body.nombre,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
-        img: body.img,
-        role: body.role
+        usuario: req.usuario._id
     });
 
-    usuario.save( (err, usuarioGuardado) => {
+    empresa.save( (err, empresaGuardado) => {
 
         if (err) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Error al crear usuarios',
+                mensaje: 'Error al crear empresa',
                 errors: err
             });
         }
         
         res.status(201).json({
             ok: true,
-            usuario: usuarioGuardado,
+            empresa: empresaGuardado,
             usuariotoken: req.usuario
         });
     });
@@ -87,43 +84,40 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
     var id = req.params.id;
     var body = req.body;
 
-    Usuario.findById( id, (err, usuario) => {
+    Empresa.findById( id, (err, empresa) => {
         
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al buscar usuario',
+                mensaje: 'Error al buscar empresa',
                 errors: err
             });
         }
 
-        if( !usuario ){
+        if( !empresa ){
             return res.status(400).json({
                 ok: false,
-                mensaje: 'El usuario con el id ' + id + 'no existe.',
-                errors: { message: 'No existe un usuario con ese ID' }
+                mensaje: 'La empresa con el id ' + id + 'no existe.',
+                errors: { message: 'No existe una empresa con ese ID' }
             });
         }
 
-        usuario.nombre = body.nombre;
-        usuario.email = body.email;
-        usuario.role = body.role;
+        empresa.nombre = body.nombre;
+        empresa.usuario = req.usuario._id;
 
-        usuario.save((err, usuarioGuardado) => {
+        empresa.save((err, empresaGuardado) => {
 
             if (err) {
                 return res.status(400).json({
                     ok: false,
-                    mensaje: 'Error al actualizar usuario',
+                    mensaje: 'Error al actualizar empresa',
                     errors: err
                 });
             }
 
-            usuarioGuardado.password = ':)';
-
             res.status(200).json({
                 ok: true,
-                usuario: usuarioGuardado
+                empresa: empresaGuardado
             });
 
         });
@@ -139,27 +133,27 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
 app.delete('/:id', mdAutenticacion.verificaToken, (req, res) => {
 
    var id = req.params.id;
-   Usuario.findByIdAndRemove(id, (err, usuarioBorrado) => {
+   Empresa.findByIdAndRemove(id, (err, empresaBorrado) => {
        
       if (err) {
           return res.status(500).json({
               ok: false,
-              mensaje: 'Error al borrar usuario',
+              mensaje: 'Error al borrar empresa',
               errors: err
           });
       } 
 
-      if ( !usuarioBorrado ) {
+      if ( !empresaBorrado ) {
           return res.status(400).json({
               ok: false,
-              mensaje: 'No existe un usuario con ese id',
-              errors: { message: 'No existe ningun usuario con ese id' }
+              mensaje: 'No existe una empresa con ese id',
+              errors: { message: 'No existe ninguna empresa con ese id' }
           });
       }
       
       res.status(200).json({
           ok: true,
-          usuario: usuarioBorrado
+          empresa: empresaBorrado
       });
 
    });

@@ -15,6 +15,11 @@ app.use(bodyParser.json())
 var appRoutes = require('./routes/app');
 var usuarioRoutes = require('./routes/usuario');
 var loginRoutes = require('./routes/login');
+var empresaRoutes = require('./routes/empresa');
+var administradorRoutes = require('./routes/administrador');
+var busquedaRoutes = require('./routes/busqueda');
+var uploadRoutes = require('./routes/upload');
+var imagenesRoutes = require('./routes/imagenes');
 
 // Conexión a la BD 
 mongoose.connection.openUri('mongodb://localhost:27017/dashboardDB', (err, res) => {
@@ -27,7 +32,13 @@ mongoose.connection.openUri('mongodb://localhost:27017/dashboardDB', (err, res) 
 
 // Rutas 
 app.use('/usuario', usuarioRoutes);
+app.use('/empresa', empresaRoutes);
+app.use('/administrador', administradorRoutes);
 app.use('/login', loginRoutes);
+app.use('/busqueda', busquedaRoutes);
+app.use('/upload', uploadRoutes);
+app.use('/img', imagenesRoutes);
+
 app.use('/', appRoutes);
 
 // Escuchar peticiones 
